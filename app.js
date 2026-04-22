@@ -14,6 +14,8 @@ import { createHash, randomBytes } from 'node:crypto';
 
 const app = express();
 
+app.use(express.static('public'));
+
 // Parse form data
 app.use(urlencoded({ extended: false }));
 
@@ -57,7 +59,19 @@ try {
       password TEXT NOT NULL
     )
   `);
-  console.log('Users table ready');
+
+    db.exec(`
+    CREATE TABLE IF NOT EXISTS cards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      type TEXT NOT NULL,
+      number TEXT NOT NULL,
+      expiry TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    )
+  `);
+
+  console.log('Tables ready');
 } catch (err) {
   console.error('Error creating table:', err.message);
   process.exit(1);
@@ -87,12 +101,96 @@ app.post('/login', (req, res) => {
     }
     req.session.userId = row.id;
     req.session.userName = row.name;
-    res.redirect('/');
+    res.redirect('/main');
   } catch (err) {
     console.error(err);
     return res.status(500).send('Database error');
   }
 });
+
+// app.get('/main', requireLogin, (req, res) => {
+//   res.render('main_screen', {
+//     userName: "TEST",
+//     cards: []
+//   });
+// }); Used to test things were working/I could see.
+
+app.get('/main', requireLogin, (req, res) => {
+
+  const user = db.prepare(
+    'SELECT * FROM users WHERE id = ?'
+  ).get(req.session.userId);
+
+  const cards = db.prepare(
+    'SELECT * FROM cards WHERE user_id = ?'
+  ).all(req.session.userId);
+
+  res.render('main_screen', {
+    userName: user.name,
+    cards
+  });
+});
+
+
+app.get('/register', (req, res) => {
+  res.render('register', { error: null });
+});
+
+app.post('/register', (req, res) => {
+
+  const { username, email, password } = req.body;
+
+  if (!username || !email || !password) {
+    return res.render('register', { error: 'All fields are required' });
+  }
+
+  try {
+    const existing = db.prepare(
+      'SELECT * FROM users WHERE email = ?'
+    ).get(email);
+
+    if (existing) {
+      return res.render('register', { error: 'Email already registered' });
+    }
+
+    // 1. create user
+    const result = db.prepare(
+      'INSERT INTO users (name, email, password) VALUES (?, ?, ?)'
+    ).run(username, email, md5(password));
+
+    // 2. create starter card for that user
+    const userId = result.lastInsertRowid;
+    generateCard(userId);
+
+    // 3. go to login
+    res.redirect('/login');
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send('Database error');
+  }
+});
+
+function generateCard(userId) {
+
+  const types = ["Visa", "Mastercard"];
+  const type = types[Math.floor(Math.random() * types.length)];
+
+  const last4 = Math.floor(1000 + Math.random() * 9000);
+
+  const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, "0");
+  const year = String(Math.floor(Math.random() * 5) + 25);
+
+  db.prepare(`
+    INSERT INTO cards (user_id, type, number, expiry)
+    VALUES (?, ?, ?, ?)
+  `).run(
+    userId,
+    type,
+    `**** **** **** ${last4}`,
+    `${month}/${year}`
+  );
+}
 
 app.post('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/login'));
@@ -119,7 +217,6 @@ app.get('/api', (req, res) => {
     return res.status(500).send('Database error: ' + err);
   }
 });
-
 
 // Add a new user
 app.post('/add', (req, res) => {

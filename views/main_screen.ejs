@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/style.css">
+  <title>Main Screen</title>
+</head>
+
+<body>
+
+<div id="main-screen">
+
+    <button id="menu-btn" onclick="toggleMenu()">O</button>
+
+    <div id="sidebar" class="sidebar">
+
+        <button id="close-btn" onclick="toggleMenu()">✖</button>
+
+        <form action="/logout" method="POST">
+          <button type="submit">Logout</button>
+        </form>
+
+        <button>Settings</button>
+        <button>Profile</button>
+
+    </div>
+
+    <h2>Welcome, <%= userName %>!</h2>
+
+    <div class="card-viewer">
+
+        <div id="card-container">
+
+            <% if (!cards || cards.length === 0) { %>
+                <p>No cards available</p>
+            <% } else { %>
+
+                <div class="card">
+                    <h3><%= cards[0].type %></h3>
+                    <p class="card-number"><%= cards[0].number %></p>
+                    <p><%= cards[0].name %></p>
+                    <p>Expiry: <%= cards[0].expiry %></p>
+                </div>
+
+            <% } %>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="/js/main.js"></script>
+
+</body>
+</html>
