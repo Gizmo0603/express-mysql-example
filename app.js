@@ -59,7 +59,7 @@ try {
       password TEXT NOT NULL
     )
   `);
-
+//Cards table. Contains user ID,
     db.exec(`
     CREATE TABLE IF NOT EXISTS cards (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
