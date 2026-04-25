@@ -56,9 +56,11 @@ try {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       email TEXT NOT NULL,
-      password TEXT NOT NULL
+      password TEXT NOT NULL,
+      parent_id INTEGER,
+      account_type TEXT NOT NULL DEFAULT 'parent' 
     )
-  `);
+  `); //parent_id/account_type used to identify created account as parent.
 //Cards table. Contains user ID,
     db.exec(`
     CREATE TABLE IF NOT EXISTS cards (
@@ -155,8 +157,8 @@ app.post('/register', (req, res) => {
 
     // 1. create user
     const result = db.prepare(
-      'INSERT INTO users (name, email, password) VALUES (?, ?, ?)'
-    ).run(username, email, md5(password));
+      'INSERT INTO users (name, email, password, parent_id, account_type) VALUES (?, ?, ?, ?, ?)'
+    ).run(username, email, md5(password), null, 'parent'); //Added Parent_id/Account_type to give parents unique modifier.
 
     // 2. create starter card for that user
     const userId = result.lastInsertRowid;
@@ -170,6 +172,30 @@ app.post('/register', (req, res) => {
     return res.status(500).send('Database error');
   }
 });
+
+app.post('/create-child', requireLogin, (req, res) => {
+
+  const {username, email, password} = req.body; //reads info from the forms.
+  const parentId = req.session.userId //Assigns the parent_id from the session of the logged in user.
+
+  try{
+    const result = db.prepare('INSERT INTO users (name, email, password, parent_id, account_type) VALUES (?, ?, ?, ?, ?)' 
+    ).run(username, email, md5(password), parentId, 'child'); //Inserts into the DB
+
+    generateCard(result.lastInsertRowid); //Generates code for child account.
+    res.redirect('/main'); //redirects to main section.
+
+  } catch (err) {
+  console.error(err);
+  res.status(500).send(err.message);
+}
+})
+
+app.get('/settings', requireLogin, (req, res) => {
+  res.render('settings', {
+    username: req.session.username
+  })
+})
 
 function generateCard(userId) {
 
@@ -206,6 +232,29 @@ app.get('/', requireLogin, (req, res) => {
     return res.status(500).send('Database error: ' + err);
   }
 });
+
+//Account Deletion.
+app.post('/delete-account', requireLogin, (req, res) => {
+  const userId = req.session.userId;
+
+  try{
+    db.prepare('DELETE FROM cards WHERE user_id = ?').run(userId);
+
+    db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+
+    req.session.destroy(() => {
+      res.redirect('/register');
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Database Error')
+  }
+})
+
+app.get('/create-child', requireLogin, (req, res) => {
+  res.render('create-child', { error: null})
+}); //Renders "create-child ejs"
 
 // Home API - List all users
 app.get('/api', (req, res) => {

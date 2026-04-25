@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/style.css">
   <title>Settings - MyUsers App</title>
 </head>
 
@@ -15,6 +16,20 @@ See connections/unlink accounts? (Child Account)
 
 -->
 
-        
+        <div id="main-screen">
+
+            <div class="top-bar">
+
+                <button onclick="location.href='/main'"> Back to Main Menu </button>
+
+            </div>
+
+        <h1> Settings </h1>
+
+        <form action="/delete-account" method="POST" onsubmit="return confirm('Are you sure?\n\nThis action will permanently delete your account and all card data.');">
+            <button type="submit">Delete Account</button>
+
+</form>
+
     </body>
 </html>
