@@ -71,7 +71,7 @@ try {
       expiry TEXT NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id)
     )
-  `);
+  `); //Another table for Funds/Actual card info?
 
   console.log('Tables ready');
 } catch (err) {

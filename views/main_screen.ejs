@@ -8,66 +8,67 @@
   <title>Main Screen</title>
 </head>
 
-<body>
+    <body>
 
-<div id="main-screen">
+        <div id="main-screen">
 
-    <button id="menu-btn" onclick="toggleMenu()">O</button>
+            <button id="menu-btn" onclick="toggleMenu()">O</button>
 
-    <div id="sidebar" class="sidebar">
+            <div id="sidebar" class="sidebar">
 
-        <button id="close-btn" onclick="toggleMenu()">✖</button>
+                <button id="close-btn" onclick="toggleMenu()">✖</button>
 
-        <form action="/logout" method="POST">
-          <button type="submit">Logout</button>
-        </form>
+                <form action="/logout" method="POST">
+                    <button type="submit">Logout</button>
+                </form>
 
-        <form action="/settings" method="GET">
-            <BUTTON type="submit">Settings</BUTTON>
-        </form>
+                <form action="/settings" method="GET">
+                    <BUTTON type="submit">Settings</BUTTON>
+                </form>
 
-            <form action="/create-child" method="GET">
-                <button type="submit"> Create Child Account</button>
-            </form>
+                <form action="/create-child" method="GET">
+                    <button type="submit"> Create Child Account</button>
+                </form>
 
 
-    </div>
+            </div>
 
-    <h2>Welcome, <%= userName %>!</h2>
+            <h2>Welcome, <%= userName %>!</h2>
 
-    <div class="card-viewer">
+            <div class="card-viewer">
 
-        <!-- Current plan:
-        Money being shown (And way to increas/decrease it. (Start each account with X amount of cash????)) 
-        Ability to transfer money between accounts
-        -->
+                <!-- Current plan:
+                Money being shown above? (And way to increase/decrease it. (Start each account with X amount of cash?)) REQUIRED
+                Ability to transfer money between accounts (New button/s) REQUIRED
+                -->
+                <div id="card-container">
 
-        <div id="card-container">
+                    <% if (!cards || cards.length === 0) { %>
+                        <p>No cards available</p>
+                    <% } else { %>
 
-            <% if (!cards || cards.length === 0) { %>
-                <p>No cards available</p>
-            <% } else { %>
+                        <div class="card">
+                            <h3><%= cards[0].type %></h3>
+                            <p class="card-number"><%= cards[0].number %></p>
+                            <p><%= cards[0].name %></p>
+                            <p>Expiry: <%= cards[0].expiry %></p>
+                        </div>
 
-                <div class="card">
-                    <h3><%= cards[0].type %></h3>
-                    <p class="card-number"><%= cards[0].number %></p>
-                    <p><%= cards[0].name %></p>
-                    <p>Expiry: <%= cards[0].expiry %></p>
+                    <% } %>
+
                 </div>
 
-            <% } %>
+                <!-- Current plan for this section:
+                Transaction. New DB, show Amount transferred (), Reason, Person/Buisness, Date. REQUIRED
+                Way to minimize/maximise it? (Minimized off bat?) Optional (But preferred)
+                Datatables.js to help format it (Rather than one giant block) Required
+                -->
+
+            </div>
 
         </div>
 
-        <!-- Current plan for this section:
-        Transaction. New DB, show Amount transferred, Reason, Person/Buisness, Date.
-        -->
+        <script src="/js/main.js"></script>
 
-    </div>
-
-</div>
-
-<script src="/js/main.js"></script>
-
-</body>
+    </body>
 </html>
