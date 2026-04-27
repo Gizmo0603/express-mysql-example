@@ -61,7 +61,7 @@ try {
       account_type TEXT NOT NULL DEFAULT 'parent' 
     )
   `); //parent_id/account_type used to identify created account as parent.
-//Cards table. Contains user ID,
+//Cards table. Contains user ID, 27TH APRIL (Added money to this DB. Default 50)
     db.exec(`
     CREATE TABLE IF NOT EXISTS cards (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,9 +69,20 @@ try {
       type TEXT NOT NULL,
       number TEXT NOT NULL,
       expiry TEXT NOT NULL,
+      money INTEGER NOT NULL DEFAULT 50, 
       FOREIGN KEY (user_id) REFERENCES users(id)
     )
-  `); //Another table for Funds/Actual card info?
+  `); //New table for Transactions
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      from_user_id INTEGER,
+      to_user_id INTEGER,
+      amount INTEGER NOT null,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
 
   console.log('Tables ready');
 } catch (err) {
@@ -199,25 +210,28 @@ app.get('/settings', requireLogin, (req, res) => {
   });
 });
 
-function generateCard(userId) {
+function generateCard(userId) { //Generates card details (Randomly) in db
 
-  const types = ["Visa", "Mastercard"];
+  const types = ["Visa", "Mastercard"]; //chooses between Visa/Mastercard (Do not believe its needed, but I transferred it regardless)
   const type = types[Math.floor(Math.random() * types.length)];
 
-  const last4 = Math.floor(1000 + Math.random() * 9000);
+  const last4 = Math.floor(1000 + Math.random() * 9000); //Randomly generate last 4 digits of card.
 
-  const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, "0");
+  const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, "0"); //Both Expirty dates.
   const year = String(Math.floor(Math.random() * 5) + 25);
 
-  db.prepare(`
+  const startingMoney = 50; //Starting funds
+
+  db.prepare(` 
     INSERT INTO cards (user_id, type, number, expiry)
     VALUES (?, ?, ?, ?)
   `).run(
     userId,
     type,
     `**** **** **** ${last4}`,
-    `${month}/${year}`
-  );
+    `${month}/${year}`,
+    startingMoney
+  ); //Actual DB insertion. Specifically into "Cards"
 }
 
 app.post('/logout', (req, res) => {
