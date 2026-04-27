@@ -103,6 +103,7 @@ app.post('/login', (req, res) => {
     }
     req.session.userId = row.id;
     req.session.userName = row.name;
+    req.session.accountType = row.account_type
     res.redirect('/main');
   } catch (err) {
     console.error(err);
@@ -182,7 +183,7 @@ app.post('/create-child', requireLogin, (req, res) => {
     const result = db.prepare('INSERT INTO users (name, email, password, parent_id, account_type) VALUES (?, ?, ?, ?, ?)' 
     ).run(username, email, md5(password), parentId, 'child'); //Inserts into the DB
 
-    generateCard(result.lastInsertRowid); //Generates code for child account.
+    generateCard(result.lastInsertRowid); //Generates card for child account.
     res.redirect('/main'); //redirects to main section.
 
   } catch (err) {
@@ -193,9 +194,10 @@ app.post('/create-child', requireLogin, (req, res) => {
 
 app.get('/settings', requireLogin, (req, res) => {
   res.render('settings', {
-    username: req.session.username
-  })
-})
+    username: req.session.username,
+    accountType: req.session.accountType
+  });
+});
 
 function generateCard(userId) {
 

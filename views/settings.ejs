@@ -9,12 +9,6 @@
 </head>
 
     <body>
-<!-- General idea: Settings connect to user ID. Various settings will require different inputs.
-General ideas: Swap dark/light mode  
-Delete account (required)
-See connections/unlink accounts? (Child Account)
-
--->
 
         <div id="main-screen">
 
@@ -25,11 +19,13 @@ See connections/unlink accounts? (Child Account)
             </div>
 
         <h1> Settings </h1>
+        
 
-        <form action="/delete-account" method="POST" onsubmit="return confirm('Are you sure?\n\nThis action will permanently delete your account and all card data.');">
+        <% if (accountType === 'parent') { %>
+            <form action="/delete-account" method="POST" onsubmit="return confirm('Are you sure?\n\nThis action will permanently delete your account and all card data.');">
             <button type="submit">Delete Account</button>
-
-</form>
+            </form>
+        <% } %>
 
     </body>
 </html>

@@ -26,17 +26,21 @@
             <BUTTON type="submit">Settings</BUTTON>
         </form>
 
-        <form action="/create-child" method="GET">
-            <button type="submit"> Create Child Account</button>
-        </form>
+            <form action="/create-child" method="GET">
+                <button type="submit"> Create Child Account</button>
+            </form>
 
-        <button>Create Child Account</button>
 
     </div>
 
     <h2>Welcome, <%= userName %>!</h2>
 
     <div class="card-viewer">
+
+        <!-- Current plan:
+        Money being shown (And way to increas/decrease it. (Start each account with X amount of cash????)) 
+        Ability to transfer money between accounts
+        -->
 
         <div id="card-container">
 
@@ -54,6 +58,10 @@
             <% } %>
 
         </div>
+
+        <!-- Current plan for this section:
+        Transaction. New DB, show Amount transferred, Reason, Person/Buisness, Date.
+        -->
 
     </div>
 
