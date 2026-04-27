@@ -37,10 +37,6 @@
 
             <div class="card-viewer">
 
-                <!-- Current plan:
-                Money being shown above? (And way to increase/decrease it. (Start each account with X amount of cash?)) REQUIRED
-                Ability to transfer money between accounts (New button/s) REQUIRED
-                -->
                 <div id="card-container">
 
                     <% if (!cards || cards.length === 0) { %>
@@ -49,11 +45,7 @@
 
                         <div class="card">
 
-                            <div class="card-funds">
-                                £<%= cards[0].money %>
-                            </div>
-
-                            <h3><%= cards[0].type %></h3>
+                            <h3>£<%= (cards[0].money / 100).toFixed(2) %></h3> <!-- fixes to 2 decimal point-->
                             <p class="card-number"><%= cards[0].number %></p>
                             <p><%= cards[0].name %></p>
                             <p>Expiry: <%= cards[0].expiry %></p>

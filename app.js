@@ -1,16 +1,7 @@
 import express, { json, urlencoded } from 'express';
 import session from 'express-session';
 import { DatabaseSync } from 'node:sqlite';
-import { loadEnvFile } from 'node:process';
 import { createHash, randomBytes } from 'node:crypto';
-
-// try {
-//   loadEnvFile();
-// } catch (e) {
-//   if (e.code !== 'ENOENT') {
-//     throw e;
-//   }
-// }
 
 const app = express();
 
@@ -61,7 +52,7 @@ try {
       account_type TEXT NOT NULL DEFAULT 'parent' 
     )
   `); //parent_id/account_type used to identify created account as parent.
-//Cards table. Contains user ID, 27TH APRIL (Added money to this DB. Default 50)
+//Cards table. Contains user ID, 27TH APRIL (Added money to this DB)
     db.exec(`
     CREATE TABLE IF NOT EXISTS cards (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -122,27 +113,20 @@ app.post('/login', (req, res) => {
   }
 });
 
-// app.get('/main', requireLogin, (req, res) => {
-//   res.render('main_screen', {
-//     userName: "TEST",
-//     cards: []
-//   });
-// }); Used to test things were working/I could see.
-
-app.get('/main', requireLogin, (req, res) => {
+app.get('/main', requireLogin, (req, res) => { //get route. Requirelogin makes sure the user is logged in.
 
   const user = db.prepare(
     'SELECT * FROM users WHERE id = ?'
-  ).get(req.session.userId);
+  ).get(req.session.userId); //gets users detail from DB via user id (found in current session)
 
   const cards = db.prepare(
     'SELECT * FROM cards WHERE user_id = ?'
-  ).all(req.session.userId);
+  ).all(req.session.userId); //gets all linked cards + data
 
   res.render('main_screen', {
     userName: user.name,
     cards
-  });
+  }); //shows all this stuff on page via render.
 });
 
 
@@ -150,52 +134,68 @@ app.get('/register', (req, res) => {
   res.render('register', { error: null });
 });
 
-app.post('/register', (req, res) => {
+app.post('/register', (req, res) => { //same as before. Look at previous future me.
 
-  const { username, email, password } = req.body;
+  const { username, email, password } = req.body; //Gets the data into the requested bodies.
 
   if (!username || !email || !password) {
-    return res.render('register', { error: 'All fields are required' });
+    return res.render('register', { error: 'All fields are required' }); //Disallows empty fields. shows error
   }
 
   try {
     const existing = db.prepare(
       'SELECT * FROM users WHERE email = ?'
-    ).get(email);
+    ).get(email); //checks user table for same email/account. Returns user of ails.
 
     if (existing) {
-      return res.render('register', { error: 'Email already registered' });
+      return res.render('register', { error: 'Email already registered' }); //Duplicate accounts (checks)
     }
 
-    // 1. create user
-    const result = db.prepare(
+    const result = db.prepare( //New parent user in db.
       'INSERT INTO users (name, email, password, parent_id, account_type) VALUES (?, ?, ?, ?, ?)'
     ).run(username, email, md5(password), null, 'parent'); //Added Parent_id/Account_type to give parents unique modifier.
 
-    // 2. create starter card for that user
-    const userId = result.lastInsertRowid;
-    generateCard(userId);
+    const userId = result.lastInsertRowid; //gets id of new user.
+    generateCard(userId, 'parent'); //calls gencard, links to that card + gives it "parent" id.
 
-    // 3. go to login
-    res.redirect('/login');
+    res.redirect('/login'); //To login. Again, look back to previous future me.
 
   } catch (err) {
     console.error(err);
-    return res.status(500).send('Database error');
+    return res.status(500).send('Database error'); //any error with DB causes this.
   }
 });
 
 app.post('/create-child', requireLogin, (req, res) => {
 
-  const {username, email, password} = req.body; //reads info from the forms.
+  const {username, email, password, funding} = req.body; //reads info from the forms.
   const parentId = req.session.userId //Assigns the parent_id from the session of the logged in user.
 
-  try{
-    const result = db.prepare('INSERT INTO users (name, email, password, parent_id, account_type) VALUES (?, ?, ?, ?, ?)' 
-    ).run(username, email, md5(password), parentId, 'child'); //Inserts into the DB
+  const amount = Math.round(parseFloat(funding) * 100); //Changes everything to pence. Math.round prevents long digit numbers (e.g 5.0000001)
 
-    generateCard(result.lastInsertRowid); //Generates card for child account.
-    res.redirect('/main'); //redirects to main section.
+  if (isNaN(amount) || amount < 1) { //enforce minimum funding (1p)
+    return res.status(400).send("Minimum funding is 0.01p");
+  }
+  try {
+  const parentCard = db.prepare(
+    'SELECT * FROM cards WHERE user_id = ?'
+  ).get(parentId)
+  
+    if (!parentCard || parentCard.money < amount) { // Should check if parent has enough money
+      return res.status(400).send("Not enough money.") 
+    }
+
+    const result = db.prepare('INSERT INTO users (name, email, password, parent_id, account_type) VALUES (?, ?, ?, ?, ?)').run(username, email, md5(password), parentId, 'child'); //Inserts into the DB + Creates child
+
+    const childId = result.lastInsertRowid;
+
+    generateCard(childId, 'child'); //Generates card for child account.
+
+    db.prepare(' UPDATE cards SET money = money - ? WHERE user_id = ?').run(amount,parentId); //Should transfer money from parent. Record as well.
+    db.prepare(' UPDATE cards SET money = money + ? WHERE user_id = ?').run(amount,childId); //Same as above, but adding to child
+    db.prepare(`INSERT INTO transactions (from_user_id, to_user_id, amount) VALUES (?, ?, ?)`).run(parentId, childId, amount);
+
+    return res.redirect('/main')
 
   } catch (err) {
   console.error(err);
@@ -210,21 +210,20 @@ app.get('/settings', requireLogin, (req, res) => {
   });
 });
 
-function generateCard(userId) { //Generates card details (Randomly) in db
+function generateCard(userId, accountType = 'parent') { //Generates card details (Randomly) in db
 
   const types = ["Visa", "Mastercard"]; //chooses between Visa/Mastercard (Do not believe its needed, but I transferred it regardless)
   const type = types[Math.floor(Math.random() * types.length)];
-
   const last4 = Math.floor(1000 + Math.random() * 9000); //Randomly generate last 4 digits of card.
 
   const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, "0"); //Both Expirty dates.
   const year = String(Math.floor(Math.random() * 5) + 25);
 
-  const startingMoney = 50; //Starting funds
+  const startingMoney = accountType === 'parent' ? 5000 : 0; //Starting funds (Changed to 5000: 0; 50 in pennies.)
 
   db.prepare(` 
-    INSERT INTO cards (user_id, type, number, expiry)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO cards (user_id, type, number, expiry, money)
+    VALUES (?, ?, ?, ?, ?)
   `).run(
     userId,
     type,
@@ -249,7 +248,7 @@ app.get('/', requireLogin, (req, res) => {
   }
 });
 
-//Account Deletion.
+//Account Deletion. TODO: Make it delete child accounts as well.
 app.post('/delete-account', requireLogin, (req, res) => {
   const userId = req.session.userId;
 
