@@ -123,9 +123,24 @@ app.get('/main', requireLogin, (req, res) => { //get route. Requirelogin makes s
     'SELECT * FROM cards WHERE user_id = ?'
   ).all(req.session.userId); //gets all linked cards + data
 
+ const transactions = db.prepare(`
+  SELECT 
+    t.amount,
+    t.created_at,
+    u1.name AS from_name,
+    u2.name AS to_name
+  FROM transactions t
+  LEFT JOIN users u1 ON t.from_user_id = u1.id
+  LEFT JOIN users u2 ON t.to_user_id = u2.id
+  WHERE t.from_user_id = ? OR t.to_user_id = ?
+  ORDER BY t.created_at DESC
+  `).all(req.session.userId, req.session.userId);
+
   res.render('main_screen', {
     userName: user.name,
-    cards
+    cards,
+    accountType: req.session.accountType, //Gets account from session (Parent/Child)
+    transactions
   }); //shows all this stuff on page via render.
 });
 

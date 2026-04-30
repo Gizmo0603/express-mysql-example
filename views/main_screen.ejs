@@ -5,8 +5,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
   <title>Main Screen</title>
 </head>
+
+    <script>
+
+        $(document).ready(function () {
+            $('transactionsTable').DataTable();
+        });
+
+    </script>
 
     <body>
 
@@ -26,10 +35,11 @@
                     <BUTTON type="submit">Settings</BUTTON>
                 </form>
 
-                <form action="/create-child" method="GET">
-                    <button type="submit"> Create Child Account</button>
-                </form>
-
+                <% if (accountType === 'parent') { %>
+                    <form action="/create-child" method="GET">
+                        <button type="submit"> Create Child Account</button>
+                    </form>
+                <% } %> <!-- Prevents account from seeing this, if not parent account.-->
 
             </div>
 
@@ -54,6 +64,48 @@
                     <% } %>
 
                 </div>
+
+                <table id="transactionsTable">
+                    <thead>
+                        <tr>
+
+                            <th> Type </th>
+                            <th> Other User </th>
+                            <th> Amount </th>
+                            <th> Date </th>
+
+                        </tr>
+                    </thead>
+
+                        <tbody> <!-- Table Body Starts -->
+                        <% transactions.forEach(t => { %> <!-- Loops code for each transaction.-->
+                            <tr> <!-- Table Row -->
+                                <td>
+                                <% if (t.from_name === userName) { %> <!-- Says who sent money.-->
+                                    Sent
+                                <% } else { %>
+                                    Received
+                                <% } %> <!-- Tells if Money was Sent/Received-->
+                                </td>
+
+                                <td>
+                                <% if (t.from_name === userName) { %> <!-- Shows receiver/sender -->
+                                    <%= t.to_name %>
+                                <% } else { %>
+                                    <%= t.from_name %>
+                                <% } %>
+                                </td>
+
+                                <td>£<%= (t.amount / 100).toFixed(2) %></td> <!-- Amount sent.-->
+                                <td><%= t.created_at %></td> <!-- Date the transaction was received/created-->
+
+                            </tr>
+
+                        <% }) %>
+
+                    </tbody> <!-- Table Body Ends-->
+                </table>
+
 
                 <!-- Current plan for this section:
                 Transaction. New DB, show Amount transferred (), Reason, Person/Buisness, Date. REQUIRED
