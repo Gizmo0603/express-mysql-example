@@ -143,9 +143,32 @@ p {
 
 .card-viewer { /* Arrows section (To be removed/adapted) */
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+    flex-direction: column;
+    align-items: flex-start; 
+    gap: 20px;
+    width: 400px; 
+}
+
+#transactionsTable {
+    width: 100%;
+    background: #111;
+    color: white;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+#transactionsTable th {
+    text-align: left;
+    padding: 10px;
+    font-weight: bold;
+}
+
+#transactionsTable td {
+    padding: 10px;
+}
+
+#transactionsTable tbody tr {
+    border-bottom: 1px solid #333;
 }
 
 .card-viewer button {
