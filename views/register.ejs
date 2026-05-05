@@ -1,31 +1,45 @@
 <!DOCTYPE html>
 <html lang="en-GB">
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/style.css">
-  <title>Register — My Card App</title>
-</head>
+  <head>
 
-<body>
-  <h1>My Card App</h1>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.css">
+    <title>Register — My Card App</title>
+    
+  </head>
 
-  <% if (error) { %>
-    <p style="color: red;"><%= error %></p>
-  <% } %>
+  <body>
 
-<form action="/register" method="POST">
+    <div class="login-container">
 
-    <input id="register-username" type="text" name="username" placeholder="username" required>
-    <input id="register-email" type="email" name="email" placeholder="Email Adress" required>
-    <input id="register-password" type="password" name="password" placeholder="Password" required>   
-    <button type="submit"> Register</button>
-</form>
+      <div class="login-card">
 
-    <p>
-        Already have an account? <a href="/login">Login here.</a>
-    </p>
+        <h1>Create Account</h1>
 
-</body>
+        <% if (error) { %>
+          <p class="error"><%= error %></p>
+        <% } %>
+
+        <form action="/register" method="POST">
+
+          <input id="register-username" type="text" name="username" placeholder="Username" required>
+          <input id="register-email" type="email" name="email" placeholder="Email Address" required>
+          <input id="register-password" type="password" name="password" placeholder="Password" required>
+
+          <button type="submit">Register</button>
+
+        </form>
+
+        <p class="register-text">
+          Already have an account? <a href="/login">Login here</a>
+        </p>
+
+      </div>
+
+    </div>
+
+  </body>
+
 </html>

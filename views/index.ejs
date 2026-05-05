@@ -1,59 +1,63 @@
 <!DOCTYPE html>
 <html lang="en-GB">
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home - MyUsers App</title>
-</head>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - MyUsers App</title>
+  </head>
 
-<body>
-  <div style="display: flex; justify-content: space-between; align-items: center;">
-    <h1>MyUsers App</h1>
-    <div>
-      Logged in as <strong><%= userName %></strong>
-      <form action="/logout" method="POST" style="display:inline;">
-        <button type="submit">Logout</button>
-      </form>
+  <body>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h1>MyUsers App</h1>
+      <div>
+        Logged in as <strong><%= userName %></strong>
+        <form action="/logout" method="POST" style="display:inline;">
+          <button type="submit">Logout</button>
+        </form>
+      </div>
     </div>
-  </div>
 
-  <h2>Add User</h2>
+    <h2>Add User</h2>
 
-  <form action="/add" method="POST">
-    <input type="text" name="name" placeholder="Name" required>
-    <input type="email" name="email" placeholder="Email Address" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <button type="submit">Add User</button>
-  </form>
+    <form action="/add" method="POST">
 
-  <h2>List Users</h2>
+      <input type="text" name="name" placeholder="Name" required>
+      <input type="email" name="email" placeholder="Email Address" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <button type="submit">Add User</button>
+      
+    </form>
 
-  <% if (users.length > 0) { %>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% users.forEach(user => { %>
+    <h2>List Users</h2>
+
+    <% if (users.length > 0) { %>
+      <table>
+        <thead>
           <tr>
-            <td><%= user.name %></td>
-            <td><%= user.email %></td>
-            <td>
-              <form action="/delete/<%= user.id %>" method="POST" style="display:inline;">
-                <button type="submit">Delete</button>
-              </form>
-            </td>
+            <th>Name</th>
+            <th>Email</th>
+            <th></th>
           </tr>
-        <% }) %>
-      </tbody>
-    </table>
-  <% } else { %>
-    <p class="empty">No users yet. Add one above!</p>
-  <% } %>
-</body>
+        </thead>
+        <tbody>
+          <% users.forEach(user => { %>
+            <tr>
+              <td><%= user.name %></td>
+              <td><%= user.email %></td>
+              <td>
+                <form action="/delete/<%= user.id %>" method="POST" style="display:inline;">
+                  <button type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <p class="empty">No users yet. Add one above!</p>
+    <% } %>
+
+  </body>
+
 </html>

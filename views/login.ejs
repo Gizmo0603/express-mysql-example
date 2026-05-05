@@ -1,29 +1,43 @@
 <!DOCTYPE html>
 <html lang="en-GB">
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="/style.css">
-  <title>Login — My Card App</title>
-</head>
+  <head>
 
-<body>
-  <h1>My Card App</h1>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.css">
+    <title>Login — My Card App</title>
+    
+  </head>
 
-  <% if (error) { %>
-    <p style="color: red;"><%= error %></p>
-  <% } %>
+  <body>
 
-<form action="/login" method="POST">
-  <input id="login-username" type="email" name="email" placeholder="Email Address" required>
-  <input id="login-password" type="password" name="password" placeholder="Password" required>
-  <button type="submit">Login</button>
-</form>
+    <div class="login-container">
 
-<p>
-  No account? <a href="/register">Register here.</a>
-</p>
+      <div class="login-card">
 
-</body>
+        <h1>Welcome to my card app</h1>
+
+        <% if (error) { %>
+          <p class="error"><%= error %></p>
+        <% } %>
+
+        <form action="/login" method="POST">
+
+          <input id="login-username" type="email" name="email" placeholder="Email Address" required>
+          <input id="login-password" type="password" name="password" placeholder="Password" required>
+          <button type="submit">Login</button>
+
+        </form>
+
+        <p class="register-text">
+          No account? <a href="/register">Register here.</a>
+        </p>
+
+      </div>
+
+    </div>
+
+  </body>
+
 </html>

@@ -49,7 +49,8 @@ try {
       email TEXT NOT NULL,
       password TEXT NOT NULL,
       parent_id INTEGER,
-      account_type TEXT NOT NULL DEFAULT 'parent' 
+      account_type TEXT NOT NULL DEFAULT 'parent',
+      FOREIGN KEY (parent_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `); //parent_id/account_type used to identify created account as parent.
 //Cards table. Contains user ID, 27TH APRIL (Added money to this DB)
@@ -61,7 +62,7 @@ try {
       number TEXT NOT NULL,
       expiry TEXT NOT NULL,
       money INTEGER NOT NULL DEFAULT 50, 
-      FOREIGN KEY (user_id) REFERENCES users(id)
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `); //New table for Transactions
     db.exec(`
@@ -74,6 +75,7 @@ try {
       )
     `);
 
+  db.exec('PRAGMA foreign_keys = ON');//enables cascading between parent/child
 
   console.log('Tables ready');
 } catch (err) {
@@ -167,7 +169,12 @@ app.post('/register', (req, res) => { //same as before. Look at previous future 
     }
 
     const result = db.prepare( //New parent user in db.
-      'INSERT INTO users (name, email, password, parent_id, account_type) VALUES (?, ?, ?, ?, ?)'
+      `INSERT INTO users (name, 
+      email, 
+      password, 
+      parent_id, 
+      account_type)
+      VALUES (?, ?, ?, ?, ?)`
     ).run(username, email, md5(password), null, 'parent'); //Added Parent_id/Account_type to give parents unique modifier.
 
     const userId = result.lastInsertRowid; //gets id of new user.
