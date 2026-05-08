@@ -183,6 +183,20 @@ p {
   margin-bottom: 20px;
 }
 
+.transfer-btn {
+  display: inline-block;
+  padding: 12px 20px;
+  background: #8b0000;
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  margin-bottom: 20px;
+}
+
+.transfer-btn:hover {
+  background: #a00000;
+}
+
 /* PC view stuff */
 @media (min-width: 768px) {
 

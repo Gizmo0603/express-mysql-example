@@ -71,6 +71,7 @@ try {
       from_user_id INTEGER,
       to_user_id INTEGER,
       amount INTEGER NOT null,
+      reason TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -128,6 +129,7 @@ app.get('/main', requireLogin, (req, res) => { //get route. Requirelogin makes s
  const transactions = db.prepare(`
   SELECT 
     t.amount,
+    t.reason,
     t.created_at,
     u1.name AS from_name,
     u2.name AS to_name
@@ -360,6 +362,71 @@ app.post('/delete/:id', (req, res) => {
     console.error(err);
     res.status(500).send('Database error');
   }
+});
+
+app.post('/transfer', requireLogin, (req, res) => { 
+
+  const fromUserId = req.session.userId; //Pulls from logged in user id (Sender) 
+  const { toEmail, amount, reason } = req.body; //toemail (who sending it to), amount (how much) reason (Optional Note) 
+  const amountPence = Math.round(parseFloat(amount) * 100); 
+
+  if (isNaN(amountPence) || amountPence <= 0) { //Prevents Letters, 0 transfer, negative transfers, letters. 
+    return res.status(400).send("Invalid amount"); 
+  } 
+
+  try { 
+    const recipient = db.prepare(` 
+      SELECT * FROM users WHERE email = ? 
+    `).get(toEmail); //Looks user up by email, returns row. 
+
+    if (!recipient) { 
+      return res.status(400).send("Recipient not found"); 
+    } //Stops process if user doesn't exist. 
+
+ 
+
+    if (recipient.id === fromUserId) { 
+      return res.status(400).send("Cannot send to yourself"); 
+    } //stops transfering to self. 
+
+    const senderCard = db.prepare( 
+      'SELECT * FROM cards WHERE user_id = ?' 
+    ).get(fromUserId); //gets senders card details 
+
+    if (!senderCard || senderCard.money < amountPence) { 
+      return res.status(400).send("Not enough funds"); //stops overdrawing and missing cards. 
+    } 
+
+    db.exec('BEGIN'); //begins the transaction. If one part succeeds, undoes it all. 
+
+    db.prepare( 
+      'UPDATE cards SET money = money - ? WHERE user_id = ?' 
+    ).run(amountPence, fromUserId); //takes from sender 
+
+    db.prepare( 
+      'UPDATE cards SET money = money + ? WHERE user_id = ?' 
+    ).run(amountPence, recipient.id); //Adds to receiver 
+
+    db.prepare(` 
+      INSERT INTO transactions (from_user_id, to_user_id, amount, reason) 
+      VALUES (?, ?, ?, ?) 
+    `).run(fromUserId, recipient.id, amountPence, reason || null); //Logs to transactions db 
+    db.exec('COMMIT'); //saves it all. 
+
+    res.redirect('/main'); //redirects. 
+
+  } catch (err) { 
+    db.exec('ROLLBACK'); 
+    console.error(err); 
+    res.status(500).send("Transfer failed"); //If it fails, rollback undoes all changes. 
+  } 
+
+}); 
+
+ 
+
+app.get('/transfer', requireLogin, (req, res) => {
+  res.render('transfer', { error: null });
 });
 
 app.use((req, res, next) => {
