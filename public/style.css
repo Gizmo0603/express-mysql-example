@@ -197,6 +197,26 @@ p {
   background: #a00000;
 }
 
+.api-key-container {
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+}
+
+.api-key-container:hover .api-key {
+  display: none;
+}
+
+.api-key-container:hover .api-key-hidden {
+  display: inline;
+}
+
+.api-key-container {
+  position: fixed;
+  top: 10px;
+  z-index: 9999;
+}
+
 /* PC view stuff */
 @media (min-width: 768px) {
 

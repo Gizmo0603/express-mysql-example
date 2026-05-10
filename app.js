@@ -50,6 +50,7 @@ try {
       password TEXT NOT NULL,
       parent_id INTEGER,
       account_type TEXT NOT NULL DEFAULT 'parent',
+      keystring TEXT UNIQUE,
       FOREIGN KEY (parent_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `); //parent_id/account_type used to identify created account as parent.
@@ -170,14 +171,16 @@ app.post('/register', (req, res) => { //same as before. Look at previous future 
       return res.render('register', { error: 'Email already registered' }); //Duplicate accounts (checks)
     }
 
+    const key = randomBytes(4).toString('hex'); //API key, 8 in length for hex
     const result = db.prepare( //New parent user in db.
       `INSERT INTO users (name, 
       email, 
       password, 
       parent_id, 
-      account_type)
-      VALUES (?, ?, ?, ?, ?)`
-    ).run(username, email, md5(password), null, 'parent'); //Added Parent_id/Account_type to give parents unique modifier.
+      account_type,
+      keystring)
+      VALUES (?, ?, ?, ?, ?, ?)
+      `).run(username, email, md5(password), null, 'parent', key); //Added Parent_id/Account_type to give parents unique modifier.
 
     const userId = result.lastInsertRowid; //gets id of new user.
     generateCard(userId, 'parent'); //calls gencard, links to that card + gives it "parent" id.
@@ -209,7 +212,16 @@ app.post('/create-child', requireLogin, (req, res) => {
       return res.status(400).send("Not enough money.") 
     }
 
-    const result = db.prepare('INSERT INTO users (name, email, password, parent_id, account_type) VALUES (?, ?, ?, ?, ?)').run(username, email, md5(password), parentId, 'child'); //Inserts into the DB + Creates child
+    const key = randomBytes(4).toString('hex'); //API key, 8 in length for hex
+    const result = db.prepare(`
+      INSERT INTO users (
+      name,
+      email,
+      password,
+      parent_id,
+      keystring,
+      account_type
+      ) VALUES (?, ?, ?, ?, ?, ?)`).run(username, email, md5(password), parentId, key,'child'); //Inserts into the DB + Creates child
 
     const childId = result.lastInsertRowid;
 
@@ -295,14 +307,81 @@ app.get('/create-child', requireLogin, (req, res) => {
   res.render('create-child', { error: null})
 }); //Renders "create-child ejs"
 
-// Home API - List all users
 app.get('/api', (req, res) => {
+  const key = req.query.key; //requires them to add api?key=(key) to it. 
+
+  if (!key) { //If no key, it takes them here.
+    return res.status(401).json({
+      error: 'API Key Required'
+    });
+  }
+
   try {
-    const rows = db.prepare('SELECT * FROM users ORDER BY id DESC').all();
-    res.json({ users: rows, userName: req.session.userName });
+    const user = db.prepare(`
+      SELECT
+        id,
+        name,
+        email,
+        parent_id,
+        account_type
+      FROM users
+      WHERE keystring = ?
+    `).get(key); //finds user via key, if its equal to that input.
+
+    if (!user) {
+      return res.status(403).json({
+        error: 'Invalid API key' //If it finds no one with that key, fails them (Tells them invalid)
+      });
+    }
+
+    const cards = db.prepare(`
+      SELECT
+        type,
+        number,
+        expiry,
+        money
+      FROM cards
+      WHERE user_id = ?
+    `).all(user.id); // Selects the info from cards to display (I can change this to whatever I want by removing/adding bits)
+
+    const transactions = db.prepare(`
+      SELECT
+        amount,
+        reason,
+        created_at,
+        from_user_id,
+        to_user_id
+      FROM transactions
+      WHERE from_user_id = ?
+         OR to_user_id = ?
+      ORDER BY created_at DESC
+    `).all(user.id, user.id); // Selects the info from transactions to display (I can change this to whatever I want by removing/adding bits)
+
+    let children = []; //This section shows child accounts (If parent account is looking at their API)
+    if (user.account_type === 'parent') {
+      children = db.prepare(`
+        SELECT
+          id,
+          name,
+          email,
+          account_type
+        FROM users
+        WHERE parent_id = ?
+      `).all(user.id);
+    }
+
+    return res.json({
+      user,
+      cards,
+      children,
+      transactions
+    });
+
   } catch (err) {
     console.error(err);
-    return res.status(500).send('Database error: ' + err);
+    return res.status(500).json({
+      error: 'Database error'
+    });
   }
 });
 
