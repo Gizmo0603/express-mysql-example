@@ -273,15 +273,12 @@ app.post('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/login'));
 });
 
-// Home - List all users (uses requireLogin middleware)
-app.get('/', requireLogin, (req, res) => {
-  try {
-    const rows = db.prepare('SELECT * FROM users ORDER BY id DESC').all();
-    res.render('index', { users: rows, userName: req.session.userName });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).send('Database error: ' + err);
+app.get('/', (req, res) => {
+  if (req.session.userId) {
+    return res.redirect('/main');
   }
+
+  res.redirect('/login');
 });
 
 //Account Deletion. TODO: Make it delete child accounts as well.
